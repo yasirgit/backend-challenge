@@ -15,6 +15,5 @@ export class PolygonAreaJob implements Job {
             task.status = TaskStatus.Failed;
             task.output = JSON.stringify({ error: 'Invalid GeoJSON' });
         }
-        return;
     }
 }

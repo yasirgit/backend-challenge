@@ -6,3 +6,5 @@ steps:
     stepNumber: 2
   - taskType: "notification"
     stepNumber: 3
+  - taskType: "report_generation"
+    stepNumber: 4
