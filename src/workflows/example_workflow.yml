@@ -1,0 +1,6 @@
+name: "example_workflow"
+steps:
+  - taskType: "analysis"
+    stepNumber: 1
+  - taskType: "notification"
+    stepNumber: 2

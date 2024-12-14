@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",                          // or a later version
+    "module": "commonjs",                          // Required for import assertions
+    "moduleResolution": "node",                  // Standard module resolution
+    "esModuleInterop": true,                     // Enables interoperability between CommonJS and ES Modules
+    "allowSyntheticDefaultImports": true,        // Allows default imports from modules with no default export
+    "resolveJsonModule": true,                   // Allows importing JSON modules
+    "strict": true,                              // Enables strict type-checking options
+    "experimentalDecorators": true,              // Enables experimental support for decorators
+    "emitDecoratorMetadata": true,               // Emits design-type metadata for decorated declarations
+    "outDir": "./dist",                          // Output directory for compiled files
+    "rootDir": "./src",                          // Root directory of input files
+    "forceConsistentCasingInFileNames": true     // Ensures consistent casing in file names
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
