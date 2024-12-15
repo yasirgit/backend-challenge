@@ -142,10 +142,8 @@ test
 
 2. **Import postman collection and environment:**
 
-   ```bash
-   1. docs/Backend Challenges.postman_collection.json (collection)
-   2. docs/Backend_Challenges_ENV.postman_environment.json (environment)
-   ```
+   1. [Backend Challenges.postman_collection.json](https://github.com/yasirgit/backend-challenge/blob/main/docs/Backend%20Challenges.postman_collection.json)
+   2. [Backend_Challenges_ENV.postman_environment.json](https://github.com/yasirgit/backend-challenge/blob/main/docs/Backend_Challenges_ENV.postman_environment.json)
 
 3. **Endpoints:**
 
