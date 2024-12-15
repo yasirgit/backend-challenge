@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 import { Task } from '../models/Task';
 import { getJobForTaskType } from '../jobs/JobFactory';
-import {WorkflowStatus} from "../workflows/WorkflowFactory";
-import {Workflow} from "../models/Workflow";
-import {Result} from "../models/Result";
+import { WorkflowStatus } from '../workflows/WorkflowFactory';
+import { Workflow } from '../models/Workflow';
+import { Result } from '../models/Result';
 
 export enum TaskStatus {
     Queued = 'queued',
@@ -23,9 +23,22 @@ export class TaskRunner {
      * @throws If the job fails, it rethrows the error.
      */
     async run(task: Task): Promise<void> {
+        const taskRepository = this.taskRepository.manager.getRepository(Task);
+        
+        const dependentTask = await taskRepository.findOne({
+            where: { taskId: task.taskId },
+            relations: ['dependsOn']
+        });
+
+        if (dependentTask?.dependsOn && dependentTask.dependsOn.status !== TaskStatus.Completed) {
+            console.log(`Task ${task.taskId} depends on task ${dependentTask.dependsOn.taskId}. Waiting for dependent task to complete...`);
+            return; // Wait for the dependent task to complete
+        }
+
         task.status = TaskStatus.InProgress;
         task.progress = 'starting job...';
         await this.taskRepository.save(task);
+
         const job = getJobForTaskType(task.taskType);
 
         try {
@@ -33,10 +46,12 @@ export class TaskRunner {
             const resultRepository = this.taskRepository.manager.getRepository(Result);
             const taskResult = await job.run(task);
             console.log(`Job ${task.taskType} for task ${task.taskId} completed successfully.`);
+
             const result = new Result();
             result.taskId = task.taskId!;
             result.data = JSON.stringify(taskResult || {});
             await resultRepository.save(result);
+
             task.resultId = result.resultId!;
             task.status = TaskStatus.Completed;
             task.progress = null;
@@ -53,7 +68,7 @@ export class TaskRunner {
         }
 
         const workflowRepository = this.taskRepository.manager.getRepository(Workflow);
-        const currentWorkflow = await workflowRepository.findOne({ where: { workflowId: task.workflow.workflowId }, relations: ['tasks'] });
+        const currentWorkflow = await workflowRepository.findOne({ where: { workflowId: task?.workflow?.workflowId }, relations: ['tasks'] });
 
         if (currentWorkflow) {
             const allCompleted = currentWorkflow.tasks.every(t => t.status === TaskStatus.Completed);
@@ -68,6 +83,25 @@ export class TaskRunner {
             }
 
             await workflowRepository.save(currentWorkflow);
+
+            // Execute the next task in the sequence
+            const nextTask = currentWorkflow.tasks.find(t => t.stepNumber === task.stepNumber + 1 && t.status === TaskStatus.Queued);
+            if (nextTask) {
+                await this.run(nextTask);
+            }
+        }
+    }
+
+    /**
+     * Starts the workflow by running the first task.
+     * @param workflow - The workflow entity to start.
+     */
+    async startWorkflow(workflow: Workflow): Promise<void> {
+        const firstTask = workflow.tasks.find(t => t.stepNumber === 1 && t.dependsOn === null);
+        if (firstTask) {
+            await this.run(firstTask);
+        } else {
+            console.error('No starting task found for the workflow.');
         }
     }
 }

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Workflow } from './Workflow';
 import {TaskStatus} from "../workers/taskRunner";
 
@@ -33,4 +33,10 @@ export class Task {
 
     @Column('simple-json', { nullable: true })
     output?: any;
+
+    @ManyToOne(() => Task, task => task.dependentTasks, { nullable: true })
+    dependsOn?: Task | null;
+
+    @OneToMany(() => Task, task => task.dependsOn)
+    dependentTasks?: Task[];
 }

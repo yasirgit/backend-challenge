@@ -15,6 +15,7 @@ export enum WorkflowStatus {
 interface WorkflowStep {
     taskType: string;
     stepNumber: number;
+    dependsOn?: number;
 }
 
 interface WorkflowDefinition {
@@ -44,7 +45,13 @@ export class WorkflowFactory {
 
         const savedWorkflow = await workflowRepository.save(workflow);
 
-        const tasks: Task[] = workflowDef.steps.map(step => {
+        if (!savedWorkflow) {
+            throw new Error('Failed to save the workflow');
+        }
+
+        const taskMap: Record<string, Task> = {};
+        const tasks: Task[] = [];
+        for (const step of workflowDef.steps) {
             const task = new Task();
             task.clientId = clientId;
             task.geoJson = geoJson;
@@ -52,11 +59,30 @@ export class WorkflowFactory {
             task.taskType = step.taskType;
             task.stepNumber = step.stepNumber;
             task.workflow = savedWorkflow;
-            return task;
-        });
+            
+            if (step.dependsOn) {
+                task.dependsOn = taskMap[step.dependsOn];
+            } else {
+                task.dependsOn = null; // Explicitly set dependsOn to null for the first task
+            }
+            
+            // await taskRepository.save(task);
+            tasks.push(task);
+            taskMap[step.taskType] = task;
+        }
 
         await taskRepository.save(tasks);
 
-        return savedWorkflow;
+        // Fetch the workflow again with its related tasks
+        const workflowWithTasks = await workflowRepository.findOne({
+            where: { workflowId: workflow.workflowId },
+            relations: ['tasks', 'tasks.dependsOn']
+        });
+
+        if (!workflowWithTasks) {
+            throw new Error('Failed to fetch the workflow with tasks');
+        }
+
+        return workflowWithTasks;
     }
 }

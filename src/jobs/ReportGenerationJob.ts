@@ -6,8 +6,23 @@ import { TaskStatus } from "../workers/taskRunner";
 
 export class ReportGenerationJob implements Job {
   async run(task: Task): Promise<void> {
+    const taskRepository = AppDataSource.getRepository(Task);
     const workflowRepository = AppDataSource.getRepository(Workflow);
-    const workflow = await workflowRepository.findOne({ where: { workflowId: task.workflow.workflowId }, relations: ['tasks'] });
+
+    // Fetch the task with its workflow
+    const fetchedTask = await taskRepository.findOne({
+      where: { taskId: task.taskId },
+      relations: ['workflow']
+    });
+
+    if (!fetchedTask) {
+      throw new Error(`Task not found: ${task.taskId}`);
+    }
+
+    const workflow = await workflowRepository.findOne({
+      where: { workflowId: fetchedTask.workflow.workflowId },
+      relations: ['tasks']
+    });
 
     if (!workflow) {
       throw new Error(`Workflow not found for task ${task.taskId}`);
@@ -29,5 +44,7 @@ export class ReportGenerationJob implements Job {
     task.output = report;
     task.status = TaskStatus.Completed;
     task.progress = "100%";
+
+    await taskRepository.save(task);
   }
 }

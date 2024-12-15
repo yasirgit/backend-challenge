@@ -2,9 +2,12 @@ import { Router } from 'express';
 import { AppDataSource } from '../data-source';
 import { WorkflowFactory } from '../workflows/WorkflowFactory'; // Create a folder for factories if you prefer
 import path from 'path';
+import { TaskRunner } from '../workers/taskRunner';
+import { Task } from '../models/Task';
 
 const router = Router();
 const workflowFactory = new WorkflowFactory(AppDataSource);
+const taskRunner = new TaskRunner(AppDataSource.getRepository(Task));
 
 router.post('/', async (req, res) => {
     const { clientId, geoJson } = req.body;
@@ -12,6 +15,9 @@ router.post('/', async (req, res) => {
 
     try {
         const workflow = await workflowFactory.createWorkflowFromYAML(workflowFile, clientId, JSON.stringify(geoJson));
+
+        // Start the workflow
+        await taskRunner.startWorkflow(workflow);
 
         res.status(202).json({
             workflowId: workflow.workflowId,
