@@ -16,7 +16,11 @@ export class ReportGenerationJob implements Job {
     });
 
     if (!fetchedTask) {
-      throw new Error(`Task not found: ${task.taskId}`);
+      task.status = TaskStatus.Failed;
+      task.output = JSON.stringify({ error: `Task not found: ${task.taskId}` });
+      await taskRepository.save(task);
+      
+      return;
     }
 
     const workflow = await workflowRepository.findOne({
@@ -25,7 +29,11 @@ export class ReportGenerationJob implements Job {
     });
 
     if (!workflow) {
-      throw new Error(`Workflow not found for task ${task.taskId}`);
+      task.status = TaskStatus.Failed;
+      task.output = JSON.stringify({ error: 'Workflow not found' });
+      await taskRepository.save(task);
+
+      return;
     }
 
     const repotableTasks = workflow.tasks.filter(t => t.taskType !== "report_generation");
@@ -41,9 +49,8 @@ export class ReportGenerationJob implements Job {
       finalReport: "Aggregated data and results"
     };
 
-    task.output = report;
+    task.output = JSON.stringify(report);
     task.status = TaskStatus.Completed;
-    task.progress = "100%";
 
     await taskRepository.save(task);
   }
