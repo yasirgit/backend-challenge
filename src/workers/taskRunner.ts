@@ -71,8 +71,9 @@ export class TaskRunner {
         const currentWorkflow = await workflowRepository.findOne({ where: { workflowId: task?.workflow?.workflowId }, relations: ['tasks'] });
 
         if (currentWorkflow) {
-            const allCompleted = currentWorkflow.tasks.every(t => t.status === TaskStatus.Completed);
-            const anyFailed = currentWorkflow.tasks.some(t => t.status === TaskStatus.Failed);
+            const workflowTasks = currentWorkflow.tasks;
+            const allCompleted = workflowTasks.every(t => t.status === TaskStatus.Completed);
+            const anyFailed = workflowTasks.some(t => t.status === TaskStatus.Failed);
 
             if (anyFailed) {
                 currentWorkflow.status = WorkflowStatus.Failed;
@@ -82,10 +83,19 @@ export class TaskRunner {
                 currentWorkflow.status = WorkflowStatus.InProgress;
             }
 
+            // Aggregate the results of all tasks
+            const aggregatedResults = workflowTasks.map(t => ({
+                taskId: t.taskId,
+                type: t.taskType,
+                output: t.output || null,
+                status: t.status
+            }));
+
+            currentWorkflow.finalResult = aggregatedResults;
             await workflowRepository.save(currentWorkflow);
 
             // Execute the next task in the sequence
-            const nextTask = currentWorkflow.tasks.find(t => t.stepNumber === task.stepNumber + 1 && t.status === TaskStatus.Queued);
+            const nextTask = workflowTasks.find(t => t.stepNumber === task.stepNumber + 1 && t.status === TaskStatus.Queued);
             if (nextTask) {
                 await this.run(nextTask);
             }
