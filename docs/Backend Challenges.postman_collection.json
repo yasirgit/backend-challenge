@@ -1,0 +1,105 @@
+{
+	"info": {
+		"_postman_id": "c552f808-2d66-459a-af83-d47d33ab989d",
+		"name": "Backend Challenges",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1538280"
+	},
+	"item": [
+		{
+			"name": "Create a Workflow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"workflowId\", jsonData.workflowId);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n \"clientId\": \"client123\",\n \"geoJson\": {\n     \"type\": \"Polygon\",\n     \"coordinates\": [\n         [\n             [\n                 -63.624885020050996,\n                 -10.311050368263523\n             ],\n             [\n                 -63.624885020050996,\n                 -10.367865108370523\n             ],\n             [\n                 -63.61278302732815,\n                 -10.367865108370523\n             ],\n             [\n                 -63.61278302732815,\n                 -10.311050368263523\n             ],\n             [\n                 -63.624885020050996,\n                 -10.311050368263523\n             ]\n         ]\n     ]\n    }\n }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host_url}}/analysis",
+					"host": [
+						"{{host_url}}"
+					],
+					"path": [
+						"analysis"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Workflow Status by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{host_url}}/workflows/{{workflowId}}/status",
+					"host": [
+						"{{host_url}}"
+					],
+					"path": [
+						"workflows",
+						"{{workflowId}}",
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Workflow Results by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{host_url}}/workflows/{{workflowId}}/results",
+					"host": [
+						"{{host_url}}"
+					],
+					"path": [
+						"workflows",
+						"{{workflowId}}",
+						"results"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
